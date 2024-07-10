@@ -1,5 +1,13 @@
 package com.intergalactic.planner.trip;
 
+import com.intergalactic.planner.activity.ActivityData;
+import com.intergalactic.planner.activity.ActivityRequestPayload;
+import com.intergalactic.planner.activity.ActivityResponse;
+import com.intergalactic.planner.activity.ActivityService;
+import com.intergalactic.planner.link.LinkData;
+import com.intergalactic.planner.link.LinkRequestPayload;
+import com.intergalactic.planner.link.LinkResponse;
+import com.intergalactic.planner.link.LinkService;
 import com.intergalactic.planner.participant.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -7,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,6 +28,15 @@ public class TripController {
 
     @Autowired
     private TripRepostory repostory;
+
+    @Autowired
+    private ActivityService activityService;
+
+    @Autowired
+    private LinkService linkService;
+
+    @Autowired
+    private TripService tripService;
 
     @PostMapping
     public ResponseEntity<TripCreateResponse> createTrip(@RequestBody TripRequestPayload payload) {
@@ -96,6 +112,50 @@ public class TripController {
         List<ParticipantData> participantList = this.participantService.getAllParticipantsFromTrip(id);
 
         return ResponseEntity.ok(participantList);
+    }
+
+    @PostMapping("/{id}/activities")
+    public ResponseEntity<ActivityResponse> registerActivitie(@PathVariable UUID id,
+                                                    @RequestBody ActivityRequestPayload payload) {
+        Optional<Trip> trip = this.repostory.findById(id);
+
+        if (trip.isPresent()) {
+            Trip rawTrip = trip.get();
+
+            ActivityResponse activityResponse = this.activityService.registerActivity(payload, rawTrip);
+
+            return ResponseEntity.ok(activityResponse);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{id}/activities")
+    public ResponseEntity<List<ActivityData>> getAllActivities(@PathVariable UUID id) {
+        List<ActivityData> activitiesList = this.activityService.getAllActivitiesFromTrip(id);
+
+        return ResponseEntity.ok(activitiesList);
+    }
+
+    @PostMapping("/{id}/links")
+    public ResponseEntity<LinkResponse> registerLink(@PathVariable UUID id,
+                                                     @RequestBody LinkRequestPayload payload) {
+        Optional<Trip> trip = this.repostory.findById(id);
+
+        if (trip.isPresent()) {
+            Trip rawTrip = trip.get();
+
+            LinkResponse linkResponse = this.linkService.registerLink(payload, rawTrip);
+
+            return ResponseEntity.ok(linkResponse);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{id}/links")
+    public ResponseEntity<List<LinkData>> getAllLinksFromId(@PathVariable UUID id) {
+        List<LinkData> linksList = this.linkService.getAllLinksFromTrip(id);
+
+        return ResponseEntity.ok(linksList);
     }
 
 }
